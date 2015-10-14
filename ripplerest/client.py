@@ -46,9 +46,12 @@ using :func:`ripplerest.Client.set_resource_id` in this way::
   >>> uuid, url = client.post_payment('sMasterPassword', payment)
 """
 
-import urllib.request
-import urllib.parse
-from urllib.error import HTTPError
+#import urllib.request
+import urllib2
+#import urllib.parse
+import urlparse
+#from urllib.error import HTTPError
+from urllib2 import HTTPError
 import json
 import uuid
 
@@ -110,23 +113,29 @@ class Client:
       for k, v in parameters.items():
         if type(v) is bool:
           parameters[k] = 'true' if v else 'false'
-      parameters = urllib.parse.urlencode(parameters)
+      #parameters = urllib.parse.urlencode(parameters)
+      parameters = urlparse.urlencode(parameters)
     pieces = (self.scheme, self.netloc, path, parameters, None)
-    url = urllib.parse.urlunsplit(pieces)
-    req = urllib.request.Request(url)
+    #url = urllib.parse.urlunsplit(pieces)
+    url = urlparse.urlunsplit(pieces)
+    #req = urllib.request.Request(url)
+    req = urllib2.Request(url)
     if data is not None:
       req.add_header("Content-Type","application/json;charset=utf-8")
       data['client_resource_id'] = self.uuid
       data['secret'] = secret
       data = json.dumps(data).encode('utf-8')
     try:
-      response = urllib.request.urlopen(req, data)
+      #response = urllib.request.urlopen(req, data)
+      response = urllib2.urlopen(req, data)
       response = json.loads(response.read().decode('utf-8'))
     except HTTPError as e:
-      error_object = json.loads(e.read().decode('utf-8'))['message']
+      #error_object = json.loads(e.read().decode('utf-8'))['message']
+      error_object = e.read()
       raise RippleRESTException(error_object)
+    print "in _request", response
     if response['success']:
-      del response['success']
+      #del response['success']
       return response
     else:
       raise RippleRESTException(response['message'])
@@ -186,7 +195,7 @@ class Client:
     response = self._request(url, data=kwargs, secret=secret)
     return response['ledger'], response['hash'], response['settings']
   
-  def post_payment(self, secret, payment):
+  def post_payment(self, secret, payment, active_address):
     """Send a payment
     
     To prevent double-spends, only one payment is possible with the same UUID.
@@ -198,9 +207,10 @@ class Client:
     :return: The UUID used for this payment and the URL of the payment
     :rtype: (uuid, url)
     """
-    url = 'payments'
+    url = 'accounts/{address}/payments'
+    url = url.format(address=active_address)
     response = self._request(url, data={'payment': payment}, secret=secret)
-    return response['client_resource_id'], response['status_url']
+    return response#['client_resource_id'], response['status_url']
   
   def get_paths(self, address, destination_account, value, currency,
     issuer=None, source_currencies=None):
@@ -376,3 +386,15 @@ class Client:
     url = url.format(hash=hash)
     response = self._request(url)
     return response['transaction']
+
+  def generate_wallet(self):
+    """
+    
+    :return: 
+    """
+    return self._request('wallet/new')
+
+  def active_account(self, currency_type, currency_value, issuer_address, active_address, issuer_pwd):
+    drop = Amount(currency_value, currency_type)
+    payment = Payment(issuer_address, active_address, drop)
+    return self.post_payment(issuer_pwd, payment, active_address)
