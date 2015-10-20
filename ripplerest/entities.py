@@ -236,3 +236,10 @@ class Trustline(dict):
     self['counterparty'] = RippleAddress(counterparty)
     self['limit'] = str(limit)
     self['currency'] = Currency(currency)
+
+class Order(dict):
+  def __init__(self, order_type, takepays, takegets, **kwargs):
+    self.update(kwargs)
+    self["type"] = order_type
+    self["taker_pays"] =  Amount(**takepays)
+    self["taker_gets"] =  Amount(**takegets)

@@ -60,6 +60,7 @@ from ripplerest.entities import Amount
 from ripplerest.entities import Balance
 from ripplerest.entities import Payment
 from ripplerest.entities import Trustline
+from ripplerest.entities import Order
 
 VERSION = 'v1'
 
@@ -90,7 +91,7 @@ class Client:
     self.set_resource_id(resource_id=resource_id)
   
   def _request(self, path, parameters=None, data=None, secret=None,
-    complete_path=False):
+    complete_path=False, method=None):
     """Make an HTTP request to the server
   
     Encode the query parameters and the form data and make the GET or POST
@@ -120,6 +121,8 @@ class Client:
     url = urlparse.urlunsplit(pieces)
     #req = urllib.request.Request(url)
     req = urllib2.Request(url)
+    if method is not None:
+      req.get_method = lambda:method
     if data is not None:
       req.add_header("Content-Type","application/json;charset=utf-8")
       data['client_resource_id'] = self.uuid
@@ -133,7 +136,7 @@ class Client:
       #error_object = json.loads(e.read().decode('utf-8'))['message']
       error_object = e.read()
       raise RippleRESTException(error_object)
-    print "in _request", response
+    #####print "in _request", path, response
     if response['success']:
       #del response['success']
       return response
@@ -331,11 +334,13 @@ class Client:
     url = 'accounts/{address}/trustlines'
     url = url.format(address=address)
     response = self._request(url, data={'trustline': trustline}, secret=secret)
-    return (
-      Trustline(**response['trustline']), 
-      response['hash'],
-      int(response['ledger']),
-    )
+    return response
+    # return (
+    #   Trustline(**response['trustline']), 
+    #   response['hash'],
+    #   int(response['ledger']),
+    # )
+
   
   def get_notification(self, address, hash, **kwargs):
     """Retrieve a notification corresponding to a transaction
@@ -394,7 +399,51 @@ class Client:
     """
     return self._request('wallet/new')
 
-  def active_account(self, currency_type, currency_value, issuer_address, active_address, issuer_pwd):
-    drop = Amount(currency_value, currency_type)
+  def active_account(self, currency_type, currency_value, issuer_address, active_address, issuer_pwd, issuer=None):
+    drop = Amount(currency_value, currency_type, issuer=issuer)
     payment = Payment(issuer_address, active_address, drop)
     return self.post_payment(issuer_pwd, payment, active_address)
+
+  def place_order(self, address, secret, order_type, get_type, get_value, pay_type, pay_value, 
+        get_counterparty=None, pay_counterparty=None):
+    pay_amount = Amount(pay_value, pay_type, counterparty=pay_counterparty)
+    get_amount = Amount(get_value, get_type, counterparty=get_counterparty)
+    order = Order(order_type, pay_amount, get_amount)
+   
+    url = 'accounts/{address}/orders'
+    url = url.format(address=address)
+    response = self._request(url, data={'order': order}, secret=secret)
+    return response
+
+  def get_account_orders(self, address):
+    url = 'accounts/{address}/orders'
+    url = url.format(address=address)
+    response = self._request(url)
+    return response
+
+  def cancel_order(self, address, secret, order_sequence):
+    url = 'accounts/{address}/orders/{order}'
+    url = url.format(address=address, order=order_sequence)
+    response = self._request(url, data={}, secret=secret, method="DELETE")
+    return response
+
+  def get_order_book(self, address, base, counter, limit =None):
+    url = 'accounts/{address}/order_book/{base}/{counter}'
+    url = url.format(address=address, base=base, counter=counter)
+    data = {}
+    if limit is not None:
+      data["limit"] = limit
+    response = self._request(url, data=data)
+    return response
+
+  def retrieve_order_transaction(self, address, hash_id):
+    url = 'accounts/{address}/transactions/{id}'
+    url = url.format(address=address, id=hash_id)
+    response = self._request(url)
+    return response
+
+  def order_transaction_history(self, address):
+    url = 'accounts/{address}/transactions'
+    url = url.format(address=address)
+    response = self._request(url)
+    return response
