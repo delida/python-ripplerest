@@ -54,13 +54,19 @@ class RobotBrain(object): # only one
         print "RobotBrain __del__", self.websocket_close()
 
     def init_robot(self, start_robot_id, end_robot_id):
-        self.robot_objs[start_robot_id] = Robot(start_robot_id)
-        #self.robot_objs[start_robot_id].get_balances(self.robot_objs[start_robot_id].address)
-        self.robot_objs[end_robot_id] = Robot(end_robot_id)
-        print self.subscribe_message_by_account(self.robot_objs[start_robot_id].address, 
-            self.robot_objs[start_robot_id].secret)
-        print self.subscribe_message_by_account(self.robot_objs[end_robot_id].address, 
-            self.robot_objs[end_robot_id].secret) 
+        for i in range(start_robot_id, end_robot_id + 1):
+            self.robot_objs[i] = Robot(i)
+            self.subscribe_message_by_account(self.robot_objs[i].address, 
+                self.robot_objs[i].secret)
+            rloghelper.robot_write(i, "subscribe_message_by_account", self.robot_objs[i].address) 
+
+        # self.robot_objs[start_robot_id] = Robot(start_robot_id)
+        # #self.robot_objs[start_robot_id].get_balances(self.robot_objs[start_robot_id].address)
+        # self.robot_objs[end_robot_id] = Robot(end_robot_id)
+        # print self.subscribe_message_by_account(self.robot_objs[start_robot_id].address, 
+        #     self.robot_objs[start_robot_id].secret)
+        # print self.subscribe_message_by_account(self.robot_objs[end_robot_id].address, 
+        #     self.robot_objs[end_robot_id].secret) 
 
 
     def receive_socket_data(self, data):
@@ -70,10 +76,13 @@ class RobotBrain(object): # only one
                 if _func:
                     _func(data)
                 else:
+                    rloghelper.write("robotbrain receive_socket_data error, unprocess func::"+data["type"])
                     print "robotbrain receive_socket_data error, unprocess func::", data["type"]
             else:
+                rloghelper.write("robotbrain receive_socket_data error, unknown type::"+data["type"])
                 print "robotbrain receive_socket_data error, unknown type::", data
         else:
+            rloghelper.write("robotbrain receive_socket_data error, can not format")
             print "robotbrain receive_socket_data error, can not format::", data
 
     def subscribe_message_by_account(self, address, secret):
@@ -89,7 +98,7 @@ class RobotBrain(object): # only one
             print "robotbrain websocket_close error", e
 
     def do_connection(self, data):
-        print "in do_connection", data
+        #print "in do_connection", data
         rloghelper.write(str(data))
 
     def do_ledger(self, data):
@@ -101,7 +110,7 @@ class RobotBrain(object): # only one
                 print "in do_ledger", str(datetime.datetime.fromtimestamp(_time))
                 self.do_policy()
             else:
-                 print "in do_ledger, wait ...", _time - self.last_heart_beat
+                print "in do_ledger, wait ...", _time - self.last_heart_beat
         else:
             self.tmp_heart_cnt += 1
             #print "in do_ledger:: too many heart beat", str(datetime.datetime.fromtimestamp(_time)), self.tmp_heart_cnt
@@ -114,10 +123,7 @@ class RobotBrain(object): # only one
                     #if len(robot.money) == 0: 
                         robot.get_balances(robot.address)
                         print  "robot"+ str(rid), robot.money
-
-                elif policy[0] == "order1":
-                   robot.get_balances(robot.address) 
-                   print  "robotttt"+ str(rid), robot.money
+                        rloghelper.robot_write(rid, policy[0], robot.money)
 
                 elif policy[0] == "order":
                     print str(datetime.datetime.fromtimestamp(int(time.time()))), "robot"+ str(rid), "order", robot.money
@@ -138,7 +144,7 @@ if robot.money.has_key("{p1}"):
                     # else:
                     #     print "robot"+ str(rid), robot.money
 
-                elif policy[0] == "payment1":
+                elif policy[0] == "payment":
                     _expr = """
 if not robot.money.has_key("{p1}") or int(float(robot.money["{p1}"])) {p2} {p5}:
         robot.active_account("{p3}", {p4}, config.issuer_account, robot.address, config.issuer_secret)

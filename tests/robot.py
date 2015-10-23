@@ -36,6 +36,7 @@ import config
 # print "end" 
 
 from rfiledb import rdbhelper
+from rfiledb import rloghelper
 
 def exeTime(func):  
     def _func(*args, **args2):  
@@ -43,7 +44,8 @@ def exeTime(func):
         #print "@%s, {%s} start" % (time.strftime("%X", time.localtime()), func.__name__)  
         back = func(*args, **args2)  
         #print "@%s, {%s} end" % (time.strftime("%X", time.localtime()), func.__name__)  
-        print "@%.3fs taken for {%s}" % (time.time() - t0, func.__name__)  
+        print "@%.3fs taken for {%s}" % (time.time() - t0, func.__name__) 
+        rloghelper.write("@%.3fs taken for {%s}" % (time.time() - t0, func.__name__) ) 
         return back  
     return _func  
 
@@ -74,6 +76,7 @@ class Robot(object):
     def get_master_balances(self):
         return self.get_balances(config.issuer_account)
 
+    @exeTime
     def generate_wallet(self):
         try:
             _wallet_dict = self.clienthelper.generate_wallet() 
@@ -89,7 +92,8 @@ class Robot(object):
 
     @exeTime
     def active_account(self, currency_type, currency_value, issuer_account, wallet_address, issuer_secret, issuer=None):
-        print self.robot_id, "active_account", currency_type, currency_value, issuer_account, wallet_address, issuer_secret
+        #print self.robot_id, "active_account", currency_type, currency_value, issuer_account, wallet_address, issuer_secret
+        rloghelper.robot_write(self.robot_id, "active_account", (currency_type, currency_value, issuer_account, wallet_address))
         return
         _active_dict = {}
         try:
@@ -130,7 +134,7 @@ class Robot(object):
     def place_order(self, address, secret, order_type, get_type, get_value, pay_type, pay_value, 
         get_counterparty=None, pay_counterparty=None):
         print self.robot_id, "place_order tmp return", address, secret, order_type, get_type, get_value, pay_type, pay_value
-        #return
+        rloghelper.robot_write(self.robot_id, "place_order", (address, secret, order_type, get_type, get_value, pay_type, pay_value))
         _ret_dict = {}
         try:
             _ret_dict = self.clienthelper.place_order(address, secret, order_type, pay_type, pay_value, 
