@@ -52,7 +52,8 @@ def exeTime(func):
 class Robot(object):
     def __init__(self, robot_id):
         self.clienthelper = Client(config.server_host + ":" + str(config.sercer_port), config.is_https) 
-
+        self.robot_id = robot_id
+        
         _address, _secret = None, None
 
         _robot_info = self._get_one_robot(robot_id) 
@@ -70,7 +71,6 @@ class Robot(object):
 
         self.address = _address
         self.secret = _secret
-        self.robot_id = robot_id
         self.money = {} #type: value
 
     def get_master_balances(self):
@@ -94,7 +94,7 @@ class Robot(object):
     def active_account(self, currency_type, currency_value, issuer_account, wallet_address, issuer_secret, issuer=None):
         #print self.robot_id, "active_account", currency_type, currency_value, issuer_account, wallet_address, issuer_secret
         rloghelper.robot_write(self.robot_id, "active_account", (currency_type, currency_value, issuer_account, wallet_address))
-        return
+        #return
         _active_dict = {}
         try:
             _active_dict = self.clienthelper.active_account(currency_type, currency_value, issuer_account, 
