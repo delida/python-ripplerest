@@ -46,6 +46,7 @@ class RobotBrain(object): # only one
         self.robot_objs = {}
         self.last_heart_beat = 0
         self.tmp_heart_cnt = 0
+        self.tmp_tran_cnt = 0
 
         self.init_robot(start_robot_id, end_robot_id)
 
@@ -144,7 +145,7 @@ if robot.money.has_key("{p1}"):
                     # else:
                     #     print "robot"+ str(rid), robot.money
 
-                elif policy[0] == "payment":
+                elif policy[0] == "paymentswt":
                     _expr = """
 if not robot.money.has_key("{p1}") or int(float(robot.money["{p1}"])) {p2} {p5}:
         robot.active_account("{p3}", {p4}, config.issuer_account, robot.address, config.issuer_secret)
@@ -156,12 +157,40 @@ if not robot.money.has_key("{p1}") or int(float(robot.money["{p1}"])) {p2} {p5}:
                         p5=config.policy_condition_lists[policy[1]][2])
                     #print "robot"+ str(rid), _expr
                     exec(_expr)
-
+                elif policy[0] == "paymentusd":
+                    _expr = """
+if not robot.money.has_key("{p1}") or int(float(robot.money["{p1}"])) {p2} {p5}:
+        robot.active_account("{p3}", {p4}, config.ulimit_account, robot.address, config.ulimit_secret, config.issuer)
+                    """
+                    _expr = _expr.format(p1=config.policy_condition_lists[policy[1]][0],\
+                        p2=config.policy_condition_lists[policy[1]][1],\
+                        p3=config.policy_result_lists[policy[2]][0],\
+                        p4=config.policy_result_lists[policy[2]][1],\
+                        p5=config.policy_condition_lists[policy[1]][2])
+                    #print "robot"+ str(rid), _expr
+                    exec(_expr)
+                elif policy[0] == "orderlist":
+                    _res = robot.get_account_orders(robot.address)
+                    print "orderlist", rid, _res
+                    if _res.has_key("orders"):
+                        rloghelper.robot_write(rid, "orderlist", (len(_res["orders"]), _res["orders"]))
 
     def do_transaction_main_account(self, data):
         print "do_transaction_main_account", data
 
     def do_transaction_affected_account(self, data):
-        print "do_transaction_affected_account", data
+        #print "do_transaction_affected_account", data
+        #rloghelper.write(str(data))
+        _time = int(time.time())
+        if _time - self.last_heart_beat > config.min_heart_interval:
+            if self.tmp_tran_cnt > 0:
+                print "do_transaction_affected_account", self.tmp_tran_cnt
+                rloghelper.write(("do_transaction_affected_account", self.tmp_tran_cnt, str(data)))
+            self.tmp_tran_cnt = 0
+        else:
+            self.tmp_tran_cnt += 1
 
-robotbrain = RobotBrain(2, 4)
+
+
+
+robotbrain = RobotBrain(config.start_robot_id, config.end_robot_id)

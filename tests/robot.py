@@ -101,7 +101,9 @@ class Robot(object):
                 wallet_address, issuer_secret, issuer)
         except Exception, e:
             print "active_account error", e
+            rloghelper.write(("active_account error", e))
 
+        print "active_accout------------------", _active_dict
         return _active_dict
 
     @exeTime
@@ -111,11 +113,15 @@ class Robot(object):
             _g = self.clienthelper.get_balances(address)
         except Exception, e:
             print "get_balances error", e 
+            rloghelper.write(("get_balances error", e))
 
         while 1:
             try:
                 _res = _g.next()
                 if _res.has_key("currency") and _res.has_key("value"):
+                    rloghelper.robot_write(self.robot_id, "moneychange", 
+                        (_res["currency"], self.money[_res["currency"]] if self.money.has_key(_res["currency"]) else 0, _res["value"]))
+        
                     self.money[_res["currency"]] = _res["value"]
                 _ret.append(_res)
             except StopIteration:
@@ -141,6 +147,7 @@ class Robot(object):
                 get_type, get_value, pay_counterparty, get_counterparty)
         except Exception, e:
             print "place_order error", e  
+            rloghelper.write(("place_order error", e))
         return _ret_dict
 
     @exeTime
@@ -150,6 +157,7 @@ class Robot(object):
            _ret_dict = self.clienthelper.get_account_orders(address)
         except Exception, e:
             print "get_account_orders error", e  
+            rloghelper.write(("get_account_orders error", e))
         return _ret_dict
 
     @exeTime
@@ -193,25 +201,27 @@ class Robot(object):
 
 ####temp test
 
-is_robot2 = False
+is_robot2 = True
 
 robot_obj = Robot(2)
 
+#print robot_obj.get_balances(config.ulimit_account)
+
 if robot_obj.address is not None and is_robot2:
     print "robot2 start------------------"
-    print robot_obj.get_balances(robot_obj.address)
+    #print robot_obj.active_account(config.currency_type, config.currency_value, config.issuer_account, 
+    #                robot_obj.address, config.issuer_secret)
+    #print robot_obj.get_balances(robot_obj.address)
     #print robot_obj.money
     #print robot_obj.grant_trustline(robot_obj.address, robot_obj.secret, 5, "USD", "jJ8PzpT7er3tXEWaUsVTPy3kQUaHVHdxvp")
     #robot_obj.active_account("USD", "10", config.ulimit_account, robot_obj.address, config.ulimit_secret, config.issuer)
     #print robot_obj.place_order(robot_obj.address, robot_obj.secret, "buy", "SWT", 10, "USD", 1, None, config.issuer)
-    print robot_obj.get_account_orders(robot_obj.address)
+    #print robot_obj.get_account_orders(robot_obj.address)
     #print robot_obj.cancel_order(robot_obj.address, robot_obj.secret, 2)
     #print robot_obj.get_account_orders(robot_obj.address)
     #print robot_obj.get_order_book(robot_obj.address, "USD", "SWT") 
 
     #print robot_obj.get_balances(robot_obj.address)
-
-#robot_obj.get_balances(config.ulimit_account)
 
 
 # robot_obj3 = Robot(3)
@@ -226,15 +236,15 @@ if robot_obj.address is not None and is_robot2:
 #     print robot_obj3.retrieve_order_transaction(robot_obj3.address, 
 #         "2382E8A0B5826C691A994E4EAFB8D43AD86C44922B18B6FD22CECED391CD6D61")
 
-robot_obj4 = Robot(4)
+robot_obj4 = Robot(1)
 if robot_obj4.address is not None and  is_robot2:
     print "robot4 start------------------"
     #robot_obj4.active_account("USD", "1", config.ulimit_account, robot_obj4.address, config.ulimit_secret, config.issuer)
-    print robot_obj4.get_balances(robot_obj4.address)
+    #print robot_obj4.get_balances(robot_obj4.address)
     #print robot_obj4.money
     #print robot_obj4.place_order(robot_obj4.address, robot_obj4.secret, "sell", "USD", 1, "SWT", 10, config.issuer, None)
     #print robot_obj4.place_order(robot_obj4.address, robot_obj4.secret, "buy", "USD", 1, "SWT", 10, config.issuer, None)
-    robot_obj4.get_account_orders(robot_obj4.address)
+    #robot_obj4.get_account_orders(robot_obj4.address)
     # print robot_obj4.retrieve_order_transaction(robot_obj4.address, 
     #     "2382E8A0B5826C691A994E4EAFB8D43AD86C44922B18B6FD22CECED391CD6D61")
     #robot_obj4.order_transaction_history(robot_obj4.address)
