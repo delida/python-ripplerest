@@ -122,10 +122,9 @@ class RobotBrain(object): # only one
             for policy in config.robot_policy_lists:
                 if policy[0] == "balance":
                     #if len(robot.money) == 0: 
-                        robot.get_balances(robot.address)
-                        print  "robot"+ str(rid), robot.money
-                        rloghelper.robot_write(rid, policy[0], robot.money)
-
+                        _ret = robot.get_balances(robot.address)
+                        print  "robot"+ str(rid), _ret
+                        
                 elif policy[0] == "order":
                     print str(datetime.datetime.fromtimestamp(int(time.time()))), "robot"+ str(rid), "order", robot.money
                     _expr = """
@@ -171,9 +170,19 @@ if not robot.money.has_key("{p1}") or int(float(robot.money["{p1}"])) {p2} {p5}:
                     exec(_expr)
                 elif policy[0] == "orderlist":
                     _res = robot.get_account_orders(robot.address)
-                    print "orderlist", rid, _res
                     if _res.has_key("orders"):
+                        print "orderlist", rid, _res["orders"]
                         rloghelper.robot_write(rid, "orderlist", (len(_res["orders"]), _res["orders"]))
+                elif policy[0] == "cancelorder":
+                    if len(robot.orders) > policy[1]:
+                        for o in robot.orders:
+                            if o.has_key("sequence"):
+                                _res = robot.cancel_order(robot.address, robot.secret, o["sequence"])
+                                if _res.has_key("success") and _res["success"]:
+                                    print "cancelorder", rid, o["sequence"]
+                                    rloghelper.robot_write(rid, "cancelorder", o["sequence"])
+                                break
+
 
     def do_transaction_main_account(self, data):
         print "do_transaction_main_account", data

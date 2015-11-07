@@ -43,5 +43,6 @@ robot_policy_lists = (
     ("order", 1, 0),
     ("paymentswt", 2, 2), # action_type, policy_condition, policy_result_lists
     ("paymentusd", 3, 3),
-    ("orderlist",)
+    ("orderlist",),
+    ("cancelorder", 2) # action_type, order_cnt_max to cancel
     )

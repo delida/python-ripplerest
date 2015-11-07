@@ -72,6 +72,7 @@ class Robot(object):
         self.address = _address
         self.secret = _secret
         self.money = {} #type: value
+        self.orders = []
 
     def get_master_balances(self):
         return self.get_balances(config.issuer_account)
@@ -122,7 +123,8 @@ class Robot(object):
                     rloghelper.robot_write(self.robot_id, "moneychange", 
                         (_res["currency"], self.money[_res["currency"]] if self.money.has_key(_res["currency"]) else 0, _res["value"]))
         
-                    self.money[_res["currency"]] = _res["value"]
+                    self.money[_res["currency"]] = int(float(_res["value"]) - float(_res["freezed"]))
+                    rloghelper.robot_write(self.robot_id, "balance", (_res["currency"], _res["freezed"], _res["value"]))
                 _ret.append(_res)
             except StopIteration:
                 break
@@ -158,6 +160,10 @@ class Robot(object):
         except Exception, e:
             print "get_account_orders error", e  
             rloghelper.write(("get_account_orders error", e))
+
+        _ret_dict["orders"].sort(key=lambda obj:obj.get('sequence'))
+        self.orders = _ret_dict["orders"]
+
         return _ret_dict
 
     @exeTime
@@ -205,7 +211,7 @@ is_robot2 = True
 
 robot_obj = Robot(2)
 
-#print robot_obj.get_balances(config.ulimit_account)
+print robot_obj.get_balances(config.ulimit_account)
 
 if robot_obj.address is not None and is_robot2:
     print "robot2 start------------------"
