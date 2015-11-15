@@ -182,6 +182,10 @@ if not robot.money.has_key("{p1}") or int(float(robot.money["{p1}"])) {p2} {p5}:
                                     print "cancelorder", rid, o["sequence"]
                                     rloghelper.robot_write(rid, "cancelorder", o["sequence"])
                                 break
+                elif policy[0] == "addrelations":
+                    _res = robot.add_relations(config.robot_main_account, config.robot_main_secret, policy[1], robot.address, 
+                        "USD", config.issuer, 1)
+                    print "addrelations", rid, _res
 
 
     def do_transaction_main_account(self, data):
@@ -189,7 +193,7 @@ if not robot.money.has_key("{p1}") or int(float(robot.money["{p1}"])) {p2} {p5}:
 
     def do_transaction_affected_account(self, data):
         #print "do_transaction_affected_account", data
-        #rloghelper.write(str(data))
+        rloghelper.write(("do_transaction_affected_account_all", str(data)))
         _time = int(time.time())
         if _time - self.last_heart_beat > config.min_heart_interval:
             if self.tmp_tran_cnt > 0:

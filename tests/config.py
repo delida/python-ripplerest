@@ -14,6 +14,12 @@ ulimit_account = "jHb9CJAWyB4jr91VRWn96DkukG4bwdtyTh"
 ulimit_secret = "snoPBjXtMeMyMHUVTgbuqAfg1SUTb"
 issuer = "jBciDE8Q3uJjf111VeiUNM775AMKHEbBLS" #"jBciDE8Q3uJjf111VeiUNM775AMKHEbBLS"
 
+robot_main_account = "jUFZJJnTbwBzuZcSuWc2nMFNpaGeWtRCD6"
+robot_main_secret = "ssKt7P86m5PBYmMAJoay6YZ1gNTvq"
+
+currency_ulimit_account = "jJ8PzpT7er3tXEWaUsVTPy3kQUaHVHdxvp"
+currency_ulimit_secret = "shYK7gZVBzw4m71FFqZh9TWGXLR6Q"
+
 api_receive_keywords = ("connection", "subscription", "ledger", 
     "transaction main account", "transaction affected account", "close")
 
@@ -39,6 +45,7 @@ policy_result_lists = (
 
 robot_policy_lists = (
     ("balance", ),
+    ("addrelations", "authorize") # action_type, relation_type
     ("order", 0, 1), # action_type, policy_condition, policy_result_lists
     ("order", 1, 0),
     ("paymentswt", 2, 2), # action_type, policy_condition, policy_result_lists

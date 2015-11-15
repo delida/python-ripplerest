@@ -54,6 +54,7 @@ import urlparse
 from urllib2 import HTTPError
 import json
 import uuid
+import urllib
 
 from ripplerest.entities import AccountSettings
 from ripplerest.entities import Amount
@@ -64,7 +65,7 @@ from ripplerest.entities import Order
 
 VERSION = 'v1'
 
-class RippleRESTException(Exception):
+class SkyWelldRESTException(Exception):
   pass
 
 class Client:
@@ -115,10 +116,11 @@ class Client:
         if type(v) is bool:
           parameters[k] = 'true' if v else 'false'
       #parameters = urllib.parse.urlencode(parameters)
-      parameters = urlparse.urlencode(parameters)
+      parameters = urllib.urlencode(parameters)
     pieces = (self.scheme, self.netloc, path, parameters, None)
     #url = urllib.parse.urlunsplit(pieces)
     url = urlparse.urlunsplit(pieces)
+    print "in _request", url
     #req = urllib.request.Request(url)
     req = urllib2.Request(url)
     if method is not None:
@@ -130,12 +132,13 @@ class Client:
       data = json.dumps(data).encode('utf-8')
     try:
       #response = urllib.request.urlopen(req, data)
+      print "in _request", data
       response = urllib2.urlopen(req, data)
       response = json.loads(response.read().decode('utf-8'))
     except HTTPError as e:
       #error_object = json.loads(e.read().decode('utf-8'))['message']
       error_object = e.read()
-      raise RippleRESTException(error_object)
+      raise SkyWelldRESTException(error_object)
     #####print "in _request", path, response
     if response['success']:
       #del response['success']
@@ -447,3 +450,55 @@ class Client:
     url = url.format(address=address)
     response = self._request(url)
     return response
+
+  def add_relations(self, address, secret, relations_type, counterparty, 
+    limit_currency=None, limit_issuer=None, limit_value=None):
+    url = 'accounts/{address}/relations'
+    url = url.format(address=address)
+
+    data = {
+      'type': relations_type, 
+      'counterparty': counterparty
+    }
+    if limit_currency is not None and limit_issuer is not None:
+      limit_amount = Amount(limit_value, limit_currency, issuer=limit_issuer, limit=limit_value)
+      data["amount"] = limit_amount
+    response = self._request(url, data=data, secret=secret)
+    return response
+
+  def get_relations(self, address, relations_type, counterparty, currency, maker=0):
+    url = 'accounts/{address}/relations'
+    url = url.format(address=address)
+    parameters = {
+      'type': relations_type, 
+      'counterparty': counterparty,
+      'currency': currency,
+      'maker': maker
+    }
+    response = self._request(url, parameters)
+    return response
+
+  def get_counter_relations(self, counterparty, relations_type, address, currency, maker=0):
+    url = 'counterparties/{counterparty}/relations'
+    url = url.format(counterparty=counterparty)
+    parameters = {
+      'type': relations_type, 
+      'address': address,
+      'currency': currency,
+      'maker': maker
+    }
+    response = self._request(url, parameters)
+    return response
+
+  def delete_relations(self, address, secret, relations_type, counterparty, currency=None):
+    url = 'accounts/{address}/relations'
+    url = url.format(address=address)
+    data = {
+      'type': relations_type, 
+      'counterparty': counterparty
+    }
+    if currency is not None:
+      data["currency"] = currency
+    response = self._request(url, data=data, secret=secret, method="DELETE")
+    return response
+    

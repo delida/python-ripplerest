@@ -124,6 +124,7 @@ class Robot(object):
                         (_res["currency"], self.money[_res["currency"]] if self.money.has_key(_res["currency"]) else 0, _res["value"]))
         
                     self.money[_res["currency"]] = int(float(_res["value"]) - float(_res["freezed"]))
+                    #self.money[_res["currency"]] = _res["value"]
                     rloghelper.robot_write(self.robot_id, "balance", (_res["currency"], _res["freezed"], _res["value"]))
                 _ret.append(_res)
             except StopIteration:
@@ -156,7 +157,7 @@ class Robot(object):
     def get_account_orders(self, address):
         _ret_dict = {}
         try:
-           _ret_dict = self.clienthelper.get_account_orders(address)
+            _ret_dict = self.clienthelper.get_account_orders(address)
         except Exception, e:
             print "get_account_orders error", e  
             rloghelper.write(("get_account_orders error", e))
@@ -170,7 +171,7 @@ class Robot(object):
     def cancel_order(self, address, secret, order_sequence):
         _ret_dict = {}
         try:
-           _ret_dict = self.clienthelper.cancel_order(address, secret, order_sequence)
+            _ret_dict = self.clienthelper.cancel_order(address, secret, order_sequence)
         except Exception, e:
             print "cancel_order error", e  
         return _ret_dict
@@ -178,7 +179,7 @@ class Robot(object):
     def get_order_book(self, address, base, counter):
         _ret_dict = {}
         try:
-           _ret_dict = self.clienthelper.get_order_book(address, base, counter)
+            _ret_dict = self.clienthelper.get_order_book(address, base, counter)
         except Exception, e:
             print "get_order_book error", e  
         return _ret_dict
@@ -186,7 +187,7 @@ class Robot(object):
     def retrieve_order_transaction(self, address, hash_id):
         _ret_dict = {}
         try:
-           _ret_dict = self.clienthelper.retrieve_order_transaction(address, hash_id)
+            _ret_dict = self.clienthelper.retrieve_order_transaction(address, hash_id)
         except Exception, e:
             print "retrieve_order_transaction error", e  
         return _ret_dict
@@ -194,9 +195,43 @@ class Robot(object):
     def order_transaction_history(self, address):
         _ret_dict = {}
         try:
-           _ret_dict = self.clienthelper.order_transaction_history(address)
+            _ret_dict = self.clienthelper.order_transaction_history(address)
         except Exception, e:
             print "order_transaction_history error", e  
+        return _ret_dict
+
+    def add_relations(self, address, secret, relations_type, counterparty, limit_currency, limit_issuer, limit_value):
+        _ret_dict = {}
+        #try:
+        _ret_dict = self.clienthelper.add_relations(address, secret, relations_type, counterparty, 
+            limit_currency, limit_issuer, limit_value)
+        #except Exception, e:
+        #    print "add_relations error", e  
+        return _ret_dict
+
+    def get_relations(self, address, relations_type, counterparty, currency, maker=0):
+        _ret_dict = {}
+        #try:
+        _ret_dict = self.clienthelper.get_relations(address, relations_type, counterparty, currency, maker)
+        #except Exception, e:
+        #    print "get_relations error", e  
+        return _ret_dict
+
+    def get_counter_relations(self, counterparty, relations_type, address, currency, maker=0):
+        _ret_dict = {}
+        #try:
+        _ret_dict = self.clienthelper.get_counter_relations(counterparty, relations_type, address, currency, maker)
+        #except Exception, e:
+        #    print "get_counter_relations error", e  
+        return _ret_dict
+
+    def delete_relations(self, address, secret, relations_type, counterparty, currency=None):
+        _ret_dict = {}
+        #try:
+        _ret_dict = self.clienthelper.delete_relations(address, secret, relations_type, counterparty, 
+            currency)
+        #except Exception, e:
+        #    print "add_relations error", e  
         return _ret_dict
         
     def _get_one_robot(self, robot_id):
@@ -217,7 +252,7 @@ if robot_obj.address is not None and is_robot2:
     print "robot2 start------------------"
     #print robot_obj.active_account(config.currency_type, config.currency_value, config.issuer_account, 
     #                robot_obj.address, config.issuer_secret)
-    #print robot_obj.get_balances(robot_obj.address)
+    print robot_obj.get_balances(robot_obj.address)
     #print robot_obj.money
     #print robot_obj.grant_trustline(robot_obj.address, robot_obj.secret, 5, "USD", "jJ8PzpT7er3tXEWaUsVTPy3kQUaHVHdxvp")
     #robot_obj.active_account("USD", "10", config.ulimit_account, robot_obj.address, config.ulimit_secret, config.issuer)
@@ -245,6 +280,11 @@ if robot_obj.address is not None and is_robot2:
 robot_obj4 = Robot(1)
 if robot_obj4.address is not None and  is_robot2:
     print "robot4 start------------------"
+    print robot_obj4.add_relations(config.robot_main_account, config.robot_main_secret, "authorize", robot_obj4.address, 
+                        "USD", config.issuer, 1)
+    print robot_obj4.get_relations(config.robot_main_account, "authorize", robot_obj4.address, "USD")
+    print robot_obj4.delete_relations(config.robot_main_account, config.robot_main_secret, "authorize", robot_obj4.address, "USD")
+    print robot_obj4.get_counter_relations(robot_obj4.address, "authorize", config.robot_main_account, "USD")
     #robot_obj4.active_account("USD", "1", config.ulimit_account, robot_obj4.address, config.ulimit_secret, config.issuer)
     #print robot_obj4.get_balances(robot_obj4.address)
     #print robot_obj4.money
