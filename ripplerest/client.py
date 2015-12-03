@@ -120,19 +120,20 @@ class Client:
     pieces = (self.scheme, self.netloc, path, parameters, None)
     #url = urllib.parse.urlunsplit(pieces)
     url = urlparse.urlunsplit(pieces)
-    print "in _request", url
+    ####print "in _request", url
     #req = urllib.request.Request(url)
     req = urllib2.Request(url)
     if method is not None:
       req.get_method = lambda:method
     if data is not None:
       req.add_header("Content-Type","application/json;charset=utf-8")
+      self.set_resource_id()
       data['client_resource_id'] = self.uuid
       data['secret'] = secret
       data = json.dumps(data).encode('utf-8')
     try:
       #response = urllib.request.urlopen(req, data)
-      print "in _request", data
+      ####print "in _request", data
       response = urllib2.urlopen(req, data)
       response = json.loads(response.read().decode('utf-8'))
     except HTTPError as e:
@@ -490,7 +491,7 @@ class Client:
     response = self._request(url, parameters)
     return response
 
-  def delete_relations(self, address, secret, relations_type, counterparty, currency=None):
+  def delete_relations(self, address, secret, relations_type, counterparty, issuer, currency=None):
     url = 'accounts/{address}/relations'
     url = url.format(address=address)
     data = {
@@ -498,7 +499,8 @@ class Client:
       'counterparty': counterparty
     }
     if currency is not None:
-      data["currency"] = currency
+      data["currency"] = currency + "+" + issuer
+    datadump = json.dumps(data).encode('utf-8')
     response = self._request(url, data=data, secret=secret, method="DELETE")
     return response
     

@@ -47,6 +47,7 @@ class RobotBrain(object): # only one
         self.last_heart_beat = 0
         self.tmp_heart_cnt = 0
         self.tmp_tran_cnt = 0
+        self.loop_time = 0
 
         self.init_robot(start_robot_id, end_robot_id)
 
@@ -117,75 +118,80 @@ class RobotBrain(object): # only one
             #print "in do_ledger:: too many heart beat", str(datetime.datetime.fromtimestamp(_time)), self.tmp_heart_cnt
 
     def do_policy(self):
-        for rid, robot in self.robot_objs.items():
-            print "Begin:::Robot"+str(rid)
-            for policy in config.robot_policy_lists:
-                if policy[0] == "balance":
-                    #if len(robot.money) == 0: 
-                        _ret = robot.get_balances(robot.address)
-                        print  "robot"+ str(rid), _ret
-                        
-                elif policy[0] == "order":
-                    print str(datetime.datetime.fromtimestamp(int(time.time()))), "robot"+ str(rid), "order", robot.money
-                    _expr = """
+        if True: #self.loop_time <> config.loop_time:
+            self.loop_time += 1
+            print "------------------in  loop----------------------------", self.loop_time
+            for rid, robot in self.robot_objs.items():
+                print "Begin:::Robot"+str(rid)
+                for policy in config.robot_policy_lists:
+                    if policy[0] == "balance":
+                        #if len(robot.money) == 0: 
+                            _ret = robot.get_balances(robot.address)
+                            print  "robot"+ str(rid), _ret
+                            
+                    elif policy[0] == "order":
+                        print str(datetime.datetime.fromtimestamp(int(time.time()))), "robot"+ str(rid), "order", robot.money
+                        _expr = """
 if robot.money.has_key("{p1}"):
     if int(float(robot.money["{p1}"])) {p2} {p3}:
         robot.place_order(robot.address, robot.secret, "buy", *config.policy_result_lists[{p4}])
                     """
-                    _expr = _expr.format(p1=config.policy_condition_lists[policy[1]][0],\
-                        p2=config.policy_condition_lists[policy[1]][1],\
-                        p3=config.policy_condition_lists[policy[1]][2],\
-                        p4=policy[2])
-                    #print "robot"+ str(rid), _expr
-                    exec(_expr)
-                    # if robot.money.has_key("SWT"):
-                    #     if int(float(robot.money["SWT"])) > 50:
-                    #         robot.place_order(robot.address, robot.secret, "buy", *config.policy_result_lists[1])
-                    # else:
-                    #     print "robot"+ str(rid), robot.money
+                        _expr = _expr.format(p1=config.policy_condition_lists[policy[1]][0],\
+                            p2=config.policy_condition_lists[policy[1]][1],\
+                            p3=config.policy_condition_lists[policy[1]][2],\
+                            p4=policy[2])
+                        #print "robot"+ str(rid), _expr
+                        exec(_expr)
+                        # if robot.money.has_key("SWT"):
+                        #     if int(float(robot.money["SWT"])) > 50:
+                        #         robot.place_order(robot.address, robot.secret, "buy", *config.policy_result_lists[1])
+                        # else:
+                        #     print "robot"+ str(rid), robot.money
 
-                elif policy[0] == "paymentswt":
-                    _expr = """
+                    elif policy[0] == "paymentswt":
+                        _expr = """
 if not robot.money.has_key("{p1}") or int(float(robot.money["{p1}"])) {p2} {p5}:
         robot.active_account("{p3}", {p4}, config.issuer_account, robot.address, config.issuer_secret)
                     """
-                    _expr = _expr.format(p1=config.policy_condition_lists[policy[1]][0],\
-                        p2=config.policy_condition_lists[policy[1]][1],\
-                        p3=config.policy_result_lists[policy[2]][0],\
-                        p4=config.policy_result_lists[policy[2]][1],\
-                        p5=config.policy_condition_lists[policy[1]][2])
-                    #print "robot"+ str(rid), _expr
-                    exec(_expr)
-                elif policy[0] == "paymentusd":
-                    _expr = """
+                        _expr = _expr.format(p1=config.policy_condition_lists[policy[1]][0],\
+                            p2=config.policy_condition_lists[policy[1]][1],\
+                            p3=config.policy_result_lists[policy[2]][0],\
+                            p4=config.policy_result_lists[policy[2]][1],\
+                            p5=config.policy_condition_lists[policy[1]][2])
+                        #print "robot"+ str(rid), _expr
+                        exec(_expr)
+                    elif policy[0] == "paymentusd":
+                        _expr = """
 if not robot.money.has_key("{p1}") or int(float(robot.money["{p1}"])) {p2} {p5}:
         robot.active_account("{p3}", {p4}, config.ulimit_account, robot.address, config.ulimit_secret, config.issuer)
                     """
-                    _expr = _expr.format(p1=config.policy_condition_lists[policy[1]][0],\
-                        p2=config.policy_condition_lists[policy[1]][1],\
-                        p3=config.policy_result_lists[policy[2]][0],\
-                        p4=config.policy_result_lists[policy[2]][1],\
-                        p5=config.policy_condition_lists[policy[1]][2])
-                    #print "robot"+ str(rid), _expr
-                    exec(_expr)
-                elif policy[0] == "orderlist":
-                    _res = robot.get_account_orders(robot.address)
-                    if _res.has_key("orders"):
-                        print "orderlist", rid, _res["orders"]
-                        rloghelper.robot_write(rid, "orderlist", (len(_res["orders"]), _res["orders"]))
-                elif policy[0] == "cancelorder":
-                    if len(robot.orders) > policy[1]:
-                        for o in robot.orders:
-                            if o.has_key("sequence"):
-                                _res = robot.cancel_order(robot.address, robot.secret, o["sequence"])
-                                if _res.has_key("success") and _res["success"]:
-                                    print "cancelorder", rid, o["sequence"]
-                                    rloghelper.robot_write(rid, "cancelorder", o["sequence"])
-                                break
-                elif policy[0] == "addrelations":
-                    _res = robot.add_relations(config.robot_main_account, config.robot_main_secret, policy[1], robot.address, 
-                        "USD", config.issuer, 1)
-                    print "addrelations", rid, _res
+                        _expr = _expr.format(p1=config.policy_condition_lists[policy[1]][0],\
+                            p2=config.policy_condition_lists[policy[1]][1],\
+                            p3=config.policy_result_lists[policy[2]][0],\
+                            p4=config.policy_result_lists[policy[2]][1],\
+                            p5=config.policy_condition_lists[policy[1]][2])
+                        #print "robot"+ str(rid), _expr
+                        exec(_expr)
+                    elif policy[0] == "orderlist":
+                        _res = robot.get_account_orders(robot.address)
+                        if _res.has_key("orders"):
+                            print "orderlist", rid, _res["orders"]
+                            rloghelper.robot_write(rid, "orderlist", (len(_res["orders"]), _res["orders"]))
+                    elif policy[0] == "cancelorder":
+                        if len(robot.orders) > policy[1]:
+                            for o in robot.orders:
+                                if o.has_key("sequence"):
+                                    _res = robot.cancel_order(robot.address, robot.secret, o["sequence"])
+                                    if _res.has_key("success") and _res["success"]:
+                                        print "cancelorder", rid, o["sequence"]
+                                        rloghelper.robot_write(rid, "cancelorder", o["sequence"])
+                                    break
+                    elif policy[0] == "addrelations":
+                        _res = robot.add_relations(config.robot_main_account, config.robot_main_secret, policy[1], robot.address, 
+                            "USD", config.issuer, 1)
+                        print "addrelations", rid, _res
+        else:
+            print "loop end----------------"   
 
 
     def do_transaction_main_account(self, data):

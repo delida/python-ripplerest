@@ -28,6 +28,7 @@ max_process_interval = 15
 
 start_robot_id = 3
 end_robot_id = 4
+loop_time = 100
 
 policy_condition_lists = (
     ("SWT", ">", 100),

@@ -3,7 +3,7 @@ import sys
 sys.path.append("../")
 
 import unittest
-import time
+import time, datetime
 
 from ripplerest.client import Client 
 import config
@@ -196,6 +196,56 @@ class JingtumTestCase(unittest.TestCase):
         
         print "[testOrderTran]", _ret_dict
 
+    @exeTime
+    def test_S111_AddRelations(self):
+        _ret_dict = {}
+        _address, _secret = self._priGetInfoFromDB()
+        try:
+           _ret_dict = self.clienthelper.add_relations(config.issuer_account, config.issuer_secret, "authorize", _address, 
+                "USD", config.issuer, 1)
+        except Exception, e:
+            print "add_relations error", e  
+        
+        print "[testAddRelations]", _ret_dict
+
+    def test_S113_Sleep(self):
+        time.sleep(5)
+        self.assertEqual(True, True)
+
+    @exeTime
+    def test_S121_GetRelations(self):
+        _ret_dict = {}
+        _address, _secret = self._priGetInfoFromDB()
+        try:
+           _ret_dict = self.clienthelper.get_relations(config.issuer_account, "authorize", _address, "USD")
+        except Exception, e:
+            print "get_relations error", e  
+        
+        print "[testGetRelations]", _ret_dict
+
+    @exeTime
+    def test_S131_GetCounterRelations(self):
+        _ret_dict = {}
+        _address, _secret = self._priGetInfoFromDB()
+        try:
+           _ret_dict = self.clienthelper.get_counter_relations(_address, "authorize", config.issuer_account, "USD")
+        except Exception, e:
+            print "get_counter_relations error", e  
+        
+        print "[testGetCounterRelations]", _ret_dict
+
+    @exeTime
+    def test_S141_DeleteRelations(self):
+        _ret_dict = {}
+        _address, _secret = self._priGetInfoFromDB()
+        try:
+           _ret_dict = self.clienthelper.delete_relations(config.issuer_account, config.issuer_secret, "authorize", _address, 
+                config.issuer, "USD")
+        except Exception, e:
+            print "delete_relations error", e  
+        
+        print "[testDeleteRelations]", _ret_dict
+
     # @exeTime
     # def test_S990_PlaceOrder(self):
     #     _ret_dict = {}
@@ -214,6 +264,26 @@ class JingtumTestCase(unittest.TestCase):
     #     fo.close()
             
     #     print "[testPlaceOrder2]", _ret_dict
+
+    @exeTime    
+    def test_S951_GetBalance(self):
+        _ret = []
+
+        _address, _secret = self._priGetInfoFromDB()
+        try:
+            _g = self.clienthelper.get_balances(_address)
+        except Exception, e:
+            print "get_balances error", e 
+            
+        while 1:
+            try:
+                _res = _g.next()
+                _ret.append(_res)
+            except StopIteration:
+                break
+
+        print "[testGetBalance]", _ret
+        self.assertNotEqual(len(_ret), 0)
 
 
     @exeTime    
@@ -239,4 +309,5 @@ class JingtumTestCase(unittest.TestCase):
     
 
 if __name__ == "__main__":
+    print "current_time:::", str(datetime.datetime.fromtimestamp(int(time.time())))
     unittest.main()

@@ -200,38 +200,42 @@ class Robot(object):
             print "order_transaction_history error", e  
         return _ret_dict
 
+    @exeTime
     def add_relations(self, address, secret, relations_type, counterparty, limit_currency, limit_issuer, limit_value):
         _ret_dict = {}
-        #try:
-        _ret_dict = self.clienthelper.add_relations(address, secret, relations_type, counterparty, 
-            limit_currency, limit_issuer, limit_value)
-        #except Exception, e:
-        #    print "add_relations error", e  
+        try:
+            _ret_dict = self.clienthelper.add_relations(address, secret, relations_type, counterparty, 
+                limit_currency, limit_issuer, limit_value)
+        except Exception, e:
+            print "add_relations error", e  
         return _ret_dict
 
+    @exeTime
     def get_relations(self, address, relations_type, counterparty, currency, maker=0):
         _ret_dict = {}
-        #try:
-        _ret_dict = self.clienthelper.get_relations(address, relations_type, counterparty, currency, maker)
-        #except Exception, e:
-        #    print "get_relations error", e  
+        try:
+            _ret_dict = self.clienthelper.get_relations(address, relations_type, counterparty, currency, maker)
+        except Exception, e:
+            print "get_relations error", e  
         return _ret_dict
 
+    @exeTime
     def get_counter_relations(self, counterparty, relations_type, address, currency, maker=0):
         _ret_dict = {}
-        #try:
-        _ret_dict = self.clienthelper.get_counter_relations(counterparty, relations_type, address, currency, maker)
-        #except Exception, e:
-        #    print "get_counter_relations error", e  
+        try:
+            _ret_dict = self.clienthelper.get_counter_relations(counterparty, relations_type, address, currency, maker)
+        except Exception, e:
+            print "get_counter_relations error", e  
         return _ret_dict
 
-    def delete_relations(self, address, secret, relations_type, counterparty, currency=None):
+    @exeTime
+    def delete_relations(self, address, secret, relations_type, counterparty, issuer, currency=None):
         _ret_dict = {}
-        #try:
-        _ret_dict = self.clienthelper.delete_relations(address, secret, relations_type, counterparty, 
-            currency)
-        #except Exception, e:
-        #    print "add_relations error", e  
+        try:
+            _ret_dict = self.clienthelper.delete_relations(address, secret, relations_type, counterparty, 
+                issuer, currency)
+        except Exception, e:
+            print "add_relations error", e  
         return _ret_dict
         
     def _get_one_robot(self, robot_id):
@@ -283,7 +287,8 @@ if robot_obj4.address is not None and  is_robot2:
     print robot_obj4.add_relations(config.robot_main_account, config.robot_main_secret, "authorize", robot_obj4.address, 
                         "USD", config.issuer, 1)
     print robot_obj4.get_relations(config.robot_main_account, "authorize", robot_obj4.address, "USD")
-    print robot_obj4.delete_relations(config.robot_main_account, config.robot_main_secret, "authorize", robot_obj4.address, "USD")
+    print robot_obj4.delete_relations(config.robot_main_account, config.robot_main_secret, "authorize", robot_obj4.address, 
+        config.issuer, "USD")
     print robot_obj4.get_counter_relations(robot_obj4.address, "authorize", config.robot_main_account, "USD")
     #robot_obj4.active_account("USD", "1", config.ulimit_account, robot_obj4.address, config.ulimit_secret, config.issuer)
     #print robot_obj4.get_balances(robot_obj4.address)
